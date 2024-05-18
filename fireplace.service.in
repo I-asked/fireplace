@@ -6,5 +6,5 @@ ConditionUser=!root
 Type=simple
 Environment=HYBRIS_EGLPLATFORM=null
 ExecStartPre=-/bin/sh -ec '/bin/echo QUIT >/run/psplash_fifo'
-ExecStart=@CMAKE_INSTALL_PREFIX@/bin/fireplace
+ExecStart=@CMAKE_INSTALL_PREFIX@/bin/fireplace --enable-x11
 Restart=always

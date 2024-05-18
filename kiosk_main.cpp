@@ -24,7 +24,7 @@
 #include <miral/command_line_option.h>
 #include <miral/keymap.h>
 #include <miral/set_window_management_policy.h>
-#include <miral/internal_client.h>
+#include <miral/x11_support.h>
 
 #include <unistd.h>
 #include <atomic>
@@ -82,6 +82,7 @@ int main(int argc, char const* argv[])
 
     return runner.run_with(
         {
+            X11Support{},
             display_config,
             display_config.layout_option(),
             set_window_management_policy<KioskWindowManagerPolicy>(),
