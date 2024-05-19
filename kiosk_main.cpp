@@ -18,75 +18,77 @@
 
 #include "kiosk_window_manager.h"
 
-#include <miral/runner.h>
 #include <miral/application_authorizer.h>
-#include <miral/display_configuration.h>
 #include <miral/command_line_option.h>
+#include <miral/display_configuration.h>
+#include <miral/internal_client.h>
 #include <miral/keymap.h>
+#include <miral/runner.h>
 #include <miral/set_window_management_policy.h>
 #include <miral/x11_support.h>
 
-#include <unistd.h>
 #include <atomic>
+#include <unistd.h>
 
-namespace
-{
-struct KioskAuthorizer : miral::ApplicationAuthorizer
-{
-    KioskAuthorizer() {}
-
-    virtual bool connection_is_allowed(miral::ApplicationCredentials const& creds) override
-    {
-        return true;
-    }
-
-    virtual bool configure_display_is_allowed(miral::ApplicationCredentials const& /*creds*/) override
-    {
-        return false;
-    }
-
-    virtual bool set_base_display_configuration_is_allowed(miral::ApplicationCredentials const& /*creds*/) override
-    {
-        return false;
-    }
-
-    virtual bool screencast_is_allowed(miral::ApplicationCredentials const& /*creds*/) override
-    {
-        return true;
-    }
-
-    virtual bool prompt_session_is_allowed(miral::ApplicationCredentials const& /*creds*/) override
-    {
-        return false;
-    }
-
-    bool configure_input_is_allowed(miral::ApplicationCredentials const& /*creds*/) override
-    {
-        return false;
-    }
-
-    bool set_base_input_configuration_is_allowed(miral::ApplicationCredentials const& /*creds*/) override
-    {
-        return false;
-    }
-};
+extern "C" {
+void start_mediator(struct ::wl_display *display);
 }
 
-int main(int argc, char const* argv[])
-{
-    using namespace miral;
+namespace {
+struct KioskAuthorizer : miral::ApplicationAuthorizer {
+  KioskAuthorizer() {}
 
-    MirRunner runner{argc, argv};
+  virtual bool
+  connection_is_allowed(miral::ApplicationCredentials const &creds) override {
+    return true;
+  }
 
-    DisplayConfiguration display_config{runner};
+  virtual bool configure_display_is_allowed(
+      miral::ApplicationCredentials const & /*creds*/) override {
+    return false;
+  }
 
-    return runner.run_with(
-        {
-            X11Support{},
-            display_config,
-            display_config.layout_option(),
-            set_window_management_policy<KioskWindowManagerPolicy>(),
-            SetApplicationAuthorizer<KioskAuthorizer>{},
-            Keymap{},
-        });
+  virtual bool set_base_display_configuration_is_allowed(
+      miral::ApplicationCredentials const & /*creds*/) override {
+    return false;
+  }
+
+  virtual bool screencast_is_allowed(
+      miral::ApplicationCredentials const & /*creds*/) override {
+    return true;
+  }
+
+  virtual bool prompt_session_is_allowed(
+      miral::ApplicationCredentials const & /*creds*/) override {
+    return false;
+  }
+
+  bool configure_input_is_allowed(
+      miral::ApplicationCredentials const & /*creds*/) override {
+    return false;
+  }
+
+  bool set_base_input_configuration_is_allowed(
+      miral::ApplicationCredentials const & /*creds*/) override {
+    return false;
+  }
+};
+} // namespace
+
+int main(int argc, char const *argv[]) {
+  using namespace miral;
+
+  MirRunner runner{argc, argv};
+
+  DisplayConfiguration display_config{runner};
+
+  return runner.run_with({
+      X11Support{},
+      StartupInternalClient{start_mediator, [](auto const &) {}},
+      display_config,
+      display_config.layout_option(),
+      set_window_management_policy<KioskWindowManagerPolicy>(),
+      SetApplicationAuthorizer<KioskAuthorizer>{},
+      Keymap{},
+  });
 }
